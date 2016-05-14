@@ -7,7 +7,7 @@
 
 using namespace std;
 
-// wcout << "┏" etc
+
 void printLFTP(){ wcout << L"┏"; } void printITTP(){ wcout << L"┳"; } void printRTTP(){ wcout << L"┓"; }
 void printLFMD(){ wcout << L"┣"; } void printITMD(){ wcout << L"╋"; } void printRTMD(){ wcout << L"┫"; }
 void printLFBT(){ wcout << L"┗"; } void printITBT(){ wcout << L"┻"; } void printRTBT(){ wcout << L"┛"; }
