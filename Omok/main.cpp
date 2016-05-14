@@ -48,6 +48,7 @@ int main(){
 	wcout << endl << "White: ";
 	printWhite();
 	wcout << endl;
+	//구씨
 	do{
 		if ((turn % 2)){ /* Computer turn */
 			if (turn == 1){
