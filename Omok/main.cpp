@@ -78,7 +78,7 @@ int main(){
 					if (three_count >= 2) wcout << "You can not input there" << endl;
 				}
 			} while (arr[indexX][indexY] != NONE || three_count >= 2);
-// hello git
+
 			arr[next.x][next.y] = WHITE;
 			wcout << "***********  USER  ************" << endl;
 		}
