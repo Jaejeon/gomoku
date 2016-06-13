@@ -7,7 +7,7 @@
 
 using namespace std;
 
-// wcout << "┏" etc
+
 void printLFTP(){ wcout << L"┏"; } void printITTP(){ wcout << L"┳"; } void printRTTP(){ wcout << L"┓"; }
 void printLFMD(){ wcout << L"┣"; } void printITMD(){ wcout << L"╋"; } void printRTMD(){ wcout << L"┫"; }
 void printLFBT(){ wcout << L"┗"; } void printITBT(){ wcout << L"┻"; } void printRTBT(){ wcout << L"┛"; }
@@ -48,7 +48,6 @@ int main(){
 	wcout << endl << "White: ";
 	printWhite();
 	wcout << endl;
-	//구씨
 	do{
 		if ((turn % 2)){ /* Computer turn */
 			if (turn == 1){
@@ -79,7 +78,7 @@ int main(){
 					if (three_count >= 2) wcout << "You can not input there" << endl;
 				}
 			} while (arr[indexX][indexY] != NONE || three_count >= 2);
-
+// hello git
 			arr[next.x][next.y] = WHITE;
 			wcout << "***********  USER  ************" << endl;
 		}
