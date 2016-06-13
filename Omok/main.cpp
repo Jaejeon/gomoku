@@ -7,7 +7,7 @@
 
 using namespace std;
 
-
+// wcout << "┏" etc
 void printLFTP(){ wcout << L"┏"; } void printITTP(){ wcout << L"┳"; } void printRTTP(){ wcout << L"┓"; }
 void printLFMD(){ wcout << L"┣"; } void printITMD(){ wcout << L"╋"; } void printRTMD(){ wcout << L"┫"; }
 void printLFBT(){ wcout << L"┗"; } void printITBT(){ wcout << L"┻"; } void printRTBT(){ wcout << L"┛"; }
@@ -20,11 +20,9 @@ void findIndex(char* position, int* indexX, int* indexY);
 void display();
 Position nextMove(DOL who, int depth, int x, int y);
 int recog_samsam(DOL who, int nextX, int nextY);
-void findThreats(DOL who, int x, int y, vector<Position> threats);
-void findCost(DOL who, int x, int y, vector<Position> costs);
-void findOppoThreats(DOL who, vector<Position>* threats);
+void findThreats(int x, int y, vector<Position> threats);
+void findCost(int x, int y, vector<Position> costs);
 int heuristicScore(DOL who, int x, int y);
-bool near_my_square(int x, int y, DOL who);
 
 DOL arr[BOARD_SIZE][BOARD_SIZE];
 
@@ -38,9 +36,6 @@ int main(){
 	int diagCount = 2 * BOARD_SIZE - 1;
 	int turn = 1;
 	int three_count = 0;
-	char start[6];
-	char forClear;
-	DOL stone;
 
 	for (int i = 0; i < BOARD_SIZE; i++){
 		for (int j = 0; j < BOARD_SIZE; j++){
@@ -53,112 +48,55 @@ int main(){
 	wcout << endl << "White: ";
 	printWhite();
 	wcout << endl;
-	
-	cin >> start;
-	if (start[0] == 'S'){
-		do{
-			if ((turn % 2)){ /* Computer turn */
-				if (turn == 1){
-					next.x = BOARD_SIZE / 2;
-					next.y = BOARD_SIZE / 2;
-				}
+	//구씨
+	do{
+		if ((turn % 2)){ /* Computer turn */
+			if (turn == 1){
+				next.x = BOARD_SIZE / 2;
+				next.y = BOARD_SIZE / 2;
+			}
+			else{
+				next = nextMove(BLACK, 0, -1, -1); // next.x, next.y 가 -1 이면 depth가 0
+			}
+			arr[next.x][next.y] = BLACK;
+			wcout << "***********COMPUTER************" << endl;
+			wcout << "AI : (" << next.x << ", " << next.y << ")" << endl;
+			
+		}
+		else{ /* User turn */
+			do{
+				wcout << "Please input position of white stone: ";
+				cin >> position;
+				wcout << endl;
+				findIndex(position, &indexX, &indexY);
+				if (arr[indexX][indexY] != NONE) wcout << "Invalid input... Please input another position" << endl;
 				else{
-					next = nextMove(BLACK, 0, -1, -1); // next.x, next.y 가 -1 이면 depth가 0
+					next.x = indexX;
+					next.y = indexY;
+					arr[next.x][next.y] = WHITE;
+					three_count = recog_samsam(WHITE, indexX, indexY);
+					arr[next.x][next.y] = NONE;
+					if (three_count >= 2) wcout << "You can not input there" << endl;
 				}
-				arr[next.x][next.y] = BLACK;
-				wcout << "***********COMPUTER************" << endl;
-				wcout << "AI : (" << next.x << ", " << next.y << ")" << endl;
+			} while (arr[indexX][indexY] != NONE || three_count >= 2);
 
-			}
-			else{ /* User turn */
-				do{
-					wcout << "Please input position of white stone: ";
-					cin >> position;
-					wcout << endl;
-					findIndex(position, &indexX, &indexY);
-					if (arr[indexX][indexY] != NONE) wcout << "Invalid input... Please input another position" << endl;
-					else{
-						next.x = indexX;
-						next.y = indexY;
-						arr[next.x][next.y] = WHITE;
-						three_count = recog_samsam(WHITE, indexX, indexY);
-						arr[next.x][next.y] = NONE;
-						if (three_count >= 2) wcout << "You can not input there" << endl;
-					}
-				} while (arr[indexX][indexY] != NONE || three_count >= 2);
-				arr[next.x][next.y] = WHITE;
-				wcout << "***********  USER  ************" << endl;
-			}
-			turn++;
-			display();
-		} while (recog(next.x, next.y) == NONE || recog(next.x, next.y) == BLACK_THREE || recog(next.x, next.y) == WHITE_THREE
-			|| recog(next.x, next.y) == BLACK_FOUR || recog(next.x, next.y) == WHITE_FOUR);
-
-		if (recog(next.x, next.y) == BLACK_FIVE) wcout << "Black wins";
-		else if (recog(next.x, next.y) == WHITE_FIVE) wcout << "White wins";
-		else wcout << "Draw";
-		wcout << endl;
-
-		//TODO
-		//wcout << "Press any key to continue..." << endl;
-		//cin >> position;
-		return 0;
-	}
+			arr[next.x][next.y] = WHITE;
+			wcout << "***********  USER  ************" << endl;
+		}
+		turn++;
+		display();
+	} while (recog(next.x, next.y) == NONE || recog(next.x, next.y) == BLACK_THREE || recog(next.x, next.y) == WHITE_THREE
+		|| recog(next.x, next.y) == BLACK_FOUR || recog(next.x, next.y) == WHITE_FOUR);
 	
-	else{
-		
-		do{
-			if (!(turn % 2)){ /* Computer turn */
-				if (turn == 1){
-					next.x = BOARD_SIZE / 2;
-					next.y = BOARD_SIZE / 2;
-				}
-				else{
-					next = nextMove(WHITE, 0, -1, -1); // next.x, next.y 가 -1 이면 depth가 0
-				}
-				arr[next.x][next.y] = WHITE;
-				wcout << "***********COMPUTER************" << endl;
-				wcout << "AI : (" << next.x << ", " << next.y << ")" << endl;
+	if (recog(next.x, next.y) == BLACK_FIVE) wcout << "Black wins";
+	else if (recog(next.x, next.y) == WHITE_FIVE) wcout << "White wins";
+	else wcout << "Draw";
+	wcout << endl;
 
-			}
-			else{ /* User turn */
-				do{
-					if (turn == 1){
-						position[0] = start[0];
-						position[1] = start[1];
-						position[2] = start[2];
-						position[3] = start[3];
-					}
-					else{
-						wcout << "Please input position of white stone: ";
-						cin >> position;
-						wcout << endl;
-					}
-					findIndex(position, &indexX, &indexY);
-					if (arr[indexX][indexY] != NONE) wcout << "Invalid input... Please input another position" << endl;
-					else{
-						next.x = indexX;
-						next.y = indexY;
-					}
-				} while (arr[indexX][indexY] != NONE);
-				arr[next.x][next.y] = BLACK;
-				wcout << "***********  USER  ************" << endl;
-			}
-			turn++;
-			display();
-		} while (recog(next.x, next.y) == NONE || recog(next.x, next.y) == BLACK_THREE || recog(next.x, next.y) == WHITE_THREE
-			|| recog(next.x, next.y) == BLACK_FOUR || recog(next.x, next.y) == WHITE_FOUR);
-
-		if (recog(next.x, next.y) == BLACK_FIVE) wcout << "Black wins";
-		else if (recog(next.x, next.y) == WHITE_FIVE) wcout << "White wins";
-		else wcout << "Draw";
-		wcout << endl;
-
-		//TODO
-		//wcout << "Press any key to continue..." << endl;
-		//cin >> position;
-		return 0;
-	}
+	//TODO
+	//wcout << "Press any key to continue..." << endl;
+	//cin >> position;
+	return 0;
 }
 
 int recog_samsam(DOL who, int nextX, int nextY){
@@ -179,6 +117,10 @@ int recog_samsam(DOL who, int nextX, int nextY){
 	if (lineUp.recog(arr, who, THREE)) count++;
 	if (lineVer.recog(arr, who, THREE)) count++;
 	if (lineDown.recog(arr, who, THREE)) count++;
+//	wcout << "lineHor: " << lineHor.recog(arr, who, THREE) << endl;
+//	wcout << "lineVer: " << lineVer.recog(arr, who, THREE) << endl;
+//	wcout << "lineUp: " << lineUp.recog(arr, who, THREE) << endl;
+//	wcout << "lineDown: " << lineDown.recog(arr, who, THREE) << endl;
 	
 	return count;
 }
@@ -310,145 +252,38 @@ void display(){
 	wcout << endl;
 };
 
-void findThreats(DOL who, int x, int y, vector<Position>* threats){
+void findThreats(int x, int y, vector<Position>* threats){
 	Position temp;
 
-	if (who == BLACK){
-		if (x == -1){
-			for (int i = 0; i < BOARD_SIZE; i++){
-				for (int j = 0; j < BOARD_SIZE; j++){
-					if (arr[i][j] == NONE){
-						int pre_result = recog(i, j);
-						arr[i][j] = BLACK;
-						int recog_result = recog(i, j);
-						if (recog_result >= 3 && (recog_result % 2) == 0 && pre_result != recog_result && recog_samsam(BLACK, i, j) < 2){
-							temp.x = i;
-							temp.y = j;
-							temp.score = recog_result;
-							(*threats).push_back(temp);
-						}
-						arr[i][j] = NONE;
-					}
-				}
-			}
-		}
-
-		else{
-			for (int i = 0; i < BOARD_SIZE; i++){
-				for (int j = 0; j < BOARD_SIZE; j++){
-					if (arr[i][j] == NONE){
-						arr[i][j] = BLACK;
-						if (recog(i, j) >= 3 && recog(x, y) == recog(i, j) && (recog(i, j) % 2) == 0){
-							temp.x = i;
-							temp.y = j;
-							temp.score = recog(i, j);
-							(*threats).push_back(temp);
-						}
-						arr[i][j] = NONE;
-					}
-				}
-			}
-		}
-	}
-	
-	else if (who == WHITE){
-		if (x == -1){
-			for (int i = 0; i < BOARD_SIZE; i++){
-				for (int j = 0; j < BOARD_SIZE; j++){
-					if (arr[i][j] == NONE){
-						int pre_result = recog(i, j);
-						arr[i][j] = WHITE;
-						int recog_result = recog(i, j);
-						if (recog_result >= 3 && (recog_result % 2) == 1 && pre_result != recog_result && recog_samsam(WHITE, i, j) < 2){
-							temp.x = i;
-							temp.y = j;
-							temp.score = recog_result;
-							(*threats).push_back(temp);
-						}
-						arr[i][j] = NONE;
-					}
-				}
-			}
-		}
-
-		else{
-			for (int i = 0; i < BOARD_SIZE; i++){
-				for (int j = 0; j < BOARD_SIZE; j++){
-					if (arr[i][j] == NONE){
-						arr[i][j] = WHITE;
-						if (recog(i, j) >= 3 && recog(x, y) == recog(i, j) && (recog(i, j) % 2) == 1){
-							temp.x = i;
-							temp.y = j;
-							temp.score = recog(i, j);
-							(*threats).push_back(temp);
-						}
-						arr[i][j] = NONE;
-					}
-				}
-			}
-		}
-	}
-}
-
-bool near_my_square(int x, int y, DOL who){
-
-	bool result = false;
-	for (int i = -1; i < 2; i++){
-		for (int j = -1; j < 2; j++){
-			if (i != 0 && j != 0){
-				if (x + i >= 0 && x + i < BOARD_SIZE && y + j >= 0 && y + j < BOARD_SIZE && arr[x + i][y + j] == who) result = true;
-			}
-		}
-	}
-
-	return result;
-}
-
-void findOppoThreats(DOL who, vector<Position>* threats){
-	Position temp;
-
-	if (who == BLACK){
-		for (int i = 0; i < BOARD_SIZE; i++){
-			for (int j = 0; j < BOARD_SIZE; j++){
-				if (arr[i][j] == NONE){
-					int pre_result = recog(i, j);
-					arr[i][j] = WHITE;
-					int recog_result = recog(i, j);
-					if (recog_result >= 3 && (recog_result % 2) == 1 && pre_result != recog_result){
-						temp.x = i;
-						temp.y = j;
-						temp.score = recog_result;
-
-						if (recog_result == WHITE_THREE){
-							if (near_my_square(i, j, WHITE)){
-								(*threats).push_back(temp);
-							}
-						}
-						else (*threats).push_back(temp);
-					}
-					arr[i][j] = NONE;
-				}
-			}
-		}
-	}
-	
-	else if (who == WHITE){
+	if (x == -1){
 		for (int i = 0; i < BOARD_SIZE; i++){
 			for (int j = 0; j < BOARD_SIZE; j++){
 				if (arr[i][j] == NONE){
 					int pre_result = recog(i, j);
 					arr[i][j] = BLACK;
 					int recog_result = recog(i, j);
-					if (recog_result >= 3 && (recog_result % 2) == 0 && pre_result != recog_result){
+					if (recog_result >= 3 && (recog_result % 2) == 0 && pre_result != recog_result && recog_samsam(BLACK,i,j) < 2){
 						temp.x = i;
 						temp.y = j;
 						temp.score = recog_result;
-						if (recog_result == BLACK_THREE){
-							if (near_my_square(i, j, BLACK)){
-								(*threats).push_back(temp);
-							}
-						}
-						else (*threats).push_back(temp);
+						(*threats).push_back(temp);
+					}
+					arr[i][j] = NONE;
+				}
+			}
+		}
+	}
+	
+	else{
+		for (int i = 0; i < BOARD_SIZE; i++){
+			for (int j = 0; j < BOARD_SIZE; j++){
+				if (arr[i][j] == NONE){
+					arr[i][j] = BLACK;
+					if (recog(i, j) >= 3 && recog(x, y) == recog(i, j) && (recog(i,j) % 2) == 0){
+						temp.x = i;
+						temp.y = j;
+						temp.score = recog(i, j);
+						(*threats).push_back(temp);
 					}
 					arr[i][j] = NONE;
 				}
@@ -457,20 +292,46 @@ void findOppoThreats(DOL who, vector<Position>* threats){
 	}
 }
 
-void findCost(DOL who, int x, int y, vector<Position>* costs){
+void findOppoThreats(vector<Position>* threats){
+	Position temp;
+
+	for (int i = 0; i < BOARD_SIZE; i++){
+		for (int j = 0; j < BOARD_SIZE; j++){
+			if (arr[i][j] == NONE){
+				int pre_result = recog(i, j);
+				arr[i][j] = WHITE;
+				int recog_result = recog(i, j);
+				if (recog_result >= 3 && (recog_result % 2) == 1 && pre_result != recog_result){
+					temp.x = i;
+					temp.y = j;
+					temp.score = recog_result;
+					(*threats).push_back(temp);
+				}
+				arr[i][j] = NONE;
+			}
+		}
+	}
+}
+
+void findCost(int x, int y, vector<Position>* costs){
 	Position temp;
 
 	for (int i = 0; i < BOARD_SIZE; i++){
 		for (int j = 0; j < BOARD_SIZE; j++){
 			if (arr[i][j] == NONE){
 				int pre_result = recog(x, y);
-				arr[i][j] = who; //검은 돌을 한 수 추가해서 더 나은 threat이 생긴다면 그 부분이 costs
+				arr[i][j] = BLACK; //검은 돌을 한 수 추가해서 더 나은 threat이 생긴다면 그 부분이 costs
 				if (recog(x, y) > pre_result){ 
 					temp.x = i;
 					temp.y = j;
 					temp.score = recog(i, j);
 					(*costs).push_back(temp);
+					//wcout << "*************Pushed**************" << endl;
+					//wcout << "size: " << (*costs).size() << endl;
 				}
+				//wcout << "-------------------" << endl;
+				//wcout << "pre_result: " << pre_result << endl;
+				//wcout << "move (" << i << ", " << j << "): " << recog(x, y) << endl;
 				arr[i][j] = NONE;
 			}
 		}
@@ -494,17 +355,10 @@ int heuristicScore(DOL who, int x, int y){
 
 	arr[x][y] = who;
 	int count = 0;
-	if (lineHor.recog(arr, who, TWO)) count = count + 2;
-	if (lineVer.recog(arr, who, TWO)) count = count + 2;
-	if (lineUp.recog(arr, who, TWO)) count = count + 2;
-	if (lineDown.recog(arr, who, TWO)) count = count + 2;
-
-	for (int i = -1; i < 2; i++){
-		for (int j = -1; j < 2; j++){
-			if (x + i >= 0 && x + i < BOARD_SIZE && y + j >= 0 && y + j < BOARD_SIZE && arr[x + i][y + j] == who) count++;
-		}
-	}
-
+	if (lineHor.recog(arr, who, TWO)) count++;
+	if (lineVer.recog(arr, who, TWO)) count++;
+	if (lineUp.recog(arr, who, TWO)) count++;
+	if (lineDown.recog(arr, who, TWO)) count++;
 	arr[x][y] = NONE;
 
 	return count;
@@ -518,17 +372,14 @@ Position nextMove(DOL who, int depth, int x, int y){
 	vector<Position> threats;
 	vector<Position> costs;
 	vector<Position> opposite_threats;
-	DOL winning_state;
-	DOL enemy;
-	if (who == BLACK) { winning_state = BLACK_FIVE; enemy = WHITE; }
-	else if (who == WHITE){ winning_state = WHITE_FIVE; enemy = BLACK; }
+	
 	/* 
 	*	Module: Find threat squares
 	*/
-	findThreats(who, x, y, &threats);
+	findThreats(x, y, &threats);
 
 	if (depth == 0){ //상대방이 나보다 먼저 이긴다면 막아야함
-		findOppoThreats(who, &opposite_threats);
+		findOppoThreats(&opposite_threats);
 		if (opposite_threats.size() && threats.size()){
 			int oppo_threats_max = -100;
 			int ai_threats_max = -100;
@@ -568,15 +419,12 @@ Position nextMove(DOL who, int depth, int x, int y){
 	}
 
 	for (int i = 0; i < threats.size(); i++){
-		arr[threats[i].x][threats[i].y] = who;
-		if (recog(threats[i].x, threats[i].y) == winning_state && depth > 0){
-			arr[threats[i].x][threats[i].y] = NONE;
+		if (recog(threats[i].x, threats[i].y) == BLACK_FIVE){
 			next.x = x;
 			next.y = y;
 			next.score = 60;
 			return next;
 		}
-		arr[threats[i].x][threats[i].y] = NONE;
 	}
 	
 	if (depth > 0 && (threats.size() >= 2)){
@@ -585,44 +433,52 @@ Position nextMove(DOL who, int depth, int x, int y){
 		next.score = 50;
 		return next;
 	}
-	
+
 	if (depth > 0 && threats.size() == 0){
 		next.x = x;
 		next.y = y;
 		next.score = -50;
 		return next;
 	}
+
+	/*
+	for (int i = 0; i < threats.size(); i++){
+		wcout << "Threats[" << i << "] : (" << threats[i].x << ", " << threats[i].y << ") *****Value: " << threats[i].score << endl;
+	}
+	*/
 	
 	for (int i = 0; i < threats.size(); i++){
-		arr[threats[i].x][threats[i].y] = who;
+		arr[threats[i].x][threats[i].y] = BLACK;
 
-		if (recog(threats[i].x, threats[i].y) == winning_state){
+		if (recog(threats[i].x, threats[i].y) == BLACK_FIVE){
 			arr[threats[i].x][threats[i].y] = NONE;
 			next.x = threats[i].x;
 			next.y = threats[i].y;
-			next.score = 50-depth;
+			next.score = 50;
 			return next;
 		}
 		/*
 		*	Module: findCost
 		*/
-		findCost(who, threats[i].x, threats[i].y, &costs);
+		findCost(threats[i].x, threats[i].y, &costs);
+		//wcout << "After findCost costs size: " << costs.size() << endl;
 		
 		for (int j = 0; j < costs.size(); j++){
-
-			arr[costs[j].x][costs[j].y] = enemy;
-			next = nextMove(who, depth + 1, threats[i].x, threats[i].y);
+			//wcout << "for costs.size() loop executed" << endl;
+			arr[costs[j].x][costs[j].y] = WHITE;
+			next = nextMove(BLACK, depth + 1, threats[i].x, threats[i].y);
 			temp.push_back(next);
-
+			//wcout << "temp.size() : " << temp.size() << endl;
 			arr[costs[j].x][costs[j].y] = NONE;
 		}
-
+		//wcout << "cost.size() : " << costs.size() << endl;
+		//wcout << "temp.size() : " << temp.size() << endl;
 		if (costs.size() == 0){
 			int max = -100;
 			for (int i = 0; i < BOARD_SIZE; i++){
 				for (int j = 0; j < BOARD_SIZE; j++){
 					if (arr[i][j] == NONE){//error 방지
-						int heuristic_result = heuristicScore(who, i, j);
+						int heuristic_result = heuristicScore(BLACK, i, j) + heuristicScore(WHITE, i, j);
 						if (heuristic_result > max){
 							max = heuristic_result;
 							next.x = i;
@@ -651,7 +507,7 @@ Position nextMove(DOL who, int depth, int x, int y){
 		for (int i = 0; i < BOARD_SIZE; i++){
 			for (int j = 0; j < BOARD_SIZE; j++){
 				if (arr[i][j] == NONE){
-					int heuristic_result = heuristicScore(who, i, j) + heuristicScore(enemy, i, j);
+					int heuristic_result = heuristicScore(BLACK, i, j) + heuristicScore(WHITE, i, j);
 					if (heuristic_result > max){
 						max = heuristic_result;
 						next.x = i;
@@ -676,3 +532,4 @@ Position nextMove(DOL who, int depth, int x, int y){
 	next.score = temp[index].score;
 	return next;
 }
+
